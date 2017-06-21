@@ -635,9 +635,10 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         case .unknown:
           if #available(iOS 10.0, *) {
             let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-            UNUserNotificationCenter.current().requestAuthorization(
-              options: authOptions,
-              completionHandler: {_, _ in })
+            UNUserNotificationCenter.current().requestAuthorization(options: authOptions,
+                                                                    completionHandler: { (success, error) in
+              self.triggerNotificationStatusUpdate()
+            })
           } else {
             let notificationsPermission = self.configuredPermissions
               .first { $0 is NotificationsPermission } as? NotificationsPermission

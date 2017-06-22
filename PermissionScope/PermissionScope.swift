@@ -999,12 +999,9 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
 
   fileprivate func triggerNotificationStatusUpdate() {
     let tmpNotificationPermissionStatus = notificationsPermissionStatus
-
+    defaults.set(true, forKey: Constants.NSUserDefaultsKeys.requestedNotifications)
+    defaults.synchronize()
     if #available(iOS 10.0, *) {
-      askedNotifications = true
-      waitingForNotification = true
-      defaults.set(true, forKey: Constants.NSUserDefaultsKeys.requestedNotifications)
-      defaults.synchronize()
       UNUserNotificationCenter.current().getNotificationSettings(completionHandler: { (settings) in
         if settings.authorizationStatus == .authorized {
           self.notificationsPermissionStatus = .authorized
@@ -1013,39 +1010,14 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         } else if settings.authorizationStatus == .notDetermined {
           self.notificationsPermissionStatus = .unknown
         }
-        self.waitingForNotification = false
         if tmpNotificationPermissionStatus != self.notificationsPermissionStatus {
           self.detectAndCallback()
         }
       })
     } else {
       // Fallback on earlier versions
-      let settings = UIApplication.shared.currentUserNotificationSettings
-      if let settingTypes = settings?.types , settingTypes != UIUserNotificationType() {
-        self.notificationsPermissionStatus = .authorized
-      } else {
-        if defaults.bool(forKey: Constants.NSUserDefaultsKeys.requestedNotifications) {
-          self.notificationsPermissionStatus = .unauthorized
-        } else {
-          self.notificationsPermissionStatus = .unknown
-        }
-        self.waitingForNotification = false
-        self.detectAndCallback()
-      }
     }
   }
-
-  fileprivate var askedNotifications:Bool {
-    get {
-      return defaults.bool(forKey: Constants.NSUserDefaultsKeys.requestedNotifications)
-    }
-    set {
-      defaults.set(newValue, forKey: Constants.NSUserDefaultsKeys.requestedNotifications)
-      defaults.synchronize()
-    }
-  }
-  fileprivate var waitingForNotification = false
-
   // MARK: - UI
 
   /**
